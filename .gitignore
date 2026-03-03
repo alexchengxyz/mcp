@@ -1,0 +1,5 @@
+# .env 認證設定（不追蹤 git）
+jira/.env
+
+# node_modules
+node_modules/

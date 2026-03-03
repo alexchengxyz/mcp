@@ -1,0 +1,15 @@
+{
+  "name": "mcp-servers",
+  "version": "1.0.0",
+  "description": "共用 MCP Servers（跨專案使用）",
+  "main": "jira/jira-mcp-server.js",
+  "scripts": {
+    "jira": "node jira/jira-mcp-server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1"
+  }
+}
