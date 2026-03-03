@@ -6,6 +6,9 @@
   "scripts": {
     "jira": "node jira/jira-mcp-server.js"
   },
+  "engines": {
+    "node": ">=20.18.1"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
