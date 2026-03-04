@@ -102,6 +102,24 @@ function jiraRequest(method, path, body) {
         try {
           const parsed = data ? JSON.parse(data) : {};
           if (res.statusCode >= 400) {
+            // ── 偵測帳號鎖定 / CAPTCHA 驗證碼需求 ──
+            // Jira 在帳號被鎖或需要 CAPTCHA 時會回傳 403 HTML 頁面（非 JSON）
+            if (
+              res.statusCode === 403 &&
+              (data.includes("<title>Forbidden") ||
+                data.includes("Login denied") ||
+                (parsed.errorMessages &&
+                  parsed.errorMessages.includes("Login denied")))
+            ) {
+              reject(
+                new Error(
+                  `🔒 Jira 帳號已被鎖定或需要填寫驗證碼（CAPTCHA）！\n` +
+                    `原因：多次 API 連線失敗後，Jira 會啟動安全保護機制。\n` +
+                    `解決方式：請直接開啟瀏覽器前往 ${JIRA_URL}，手動登入並完成驗證碼驗證後，API 即可恢復正常使用。`,
+                ),
+              );
+              return;
+            }
             reject(
               new Error(
                 `Jira API 錯誤 ${res.statusCode}: ${parsed.errorMessages?.join(", ") || parsed.message || data}`,
@@ -111,7 +129,18 @@ function jiraRequest(method, path, body) {
             resolve(parsed);
           }
         } catch {
-          resolve(data);
+          // 回傳非 JSON 內容（例如 HTML 錯誤頁面）
+          if (res.statusCode === 403) {
+            reject(
+              new Error(
+                `🔒 Jira 帳號已被鎖定或需要填寫驗證碼（CAPTCHA）！\n` +
+                  `原因：多次 API 連線失敗後，Jira 會啟動安全保護機制。\n` +
+                  `解決方式：請直接開啟瀏覽器前往 ${JIRA_URL}，手動登入並完成驗證碼驗證後，API 即可恢復正常使用。`,
+              ),
+            );
+          } else {
+            resolve(data);
+          }
         }
       });
     });
@@ -314,7 +343,13 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     switch (name) {
       // ── 列出所有專案 ──
       case "jira_get_projects": {
-        const projects = await jiraRequest("GET", "/rest/api/2/project");
+        const raw = await jiraRequest("GET", "/rest/api/2/project");
+        // 相容純陣列 [] 與分頁物件 { values: [] } 兩種格式
+        const projects = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.values)
+            ? raw.values
+            : Object.values(raw);
         const list = projects
           .map((p) => `• [${p.key}] ${p.name} (${p.projectTypeKey})`)
           .join("\n");
@@ -539,7 +574,13 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
 
       // ── 列出欄位 ──
       case "jira_list_fields": {
-        const fields = await jiraRequest("GET", "/rest/api/2/field");
+        const rawFields = await jiraRequest("GET", "/rest/api/2/field");
+        // 相容純陣列 [] 與分頁物件 { values: [] } 兩種格式
+        const fields = Array.isArray(rawFields)
+          ? rawFields
+          : Array.isArray(rawFields?.values)
+            ? rawFields.values
+            : Object.values(rawFields);
         const keyword = (args.keyword || "").toLowerCase();
         const filtered = keyword
           ? fields.filter(
