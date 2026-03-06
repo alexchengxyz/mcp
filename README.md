@@ -45,9 +45,9 @@ cp jira/.env.example jira/.env
 
 全域設定後，所有專案無需個別設定即可使用 Jira MCP。
 
-#### Antigravity（Gemini）— 全域
+#### Gemini CLI — 全域
 
-編輯 `~/.gemini/antigravity/mcp_config.json`：
+編輯 `~/.gemini/settings.json`（若不存在則新建）：
 
 ```json
 {
@@ -62,17 +62,10 @@ cp jira/.env.example jira/.env
 
 #### Claude Code — 全域
 
-編輯 `~/.claude/mcp_settings.json`（若不存在則新建）：
+使用 CLI 指令新增（user scope，儲存於 `~/.claude.json`）：
 
-```json
-{
-  "mcpServers": {
-    "jira": {
-      "command": "node",
-      "args": ["/Users/Bobchen/Desktop/dev/mcp/jira/jira-mcp-server.js"]
-    }
-  }
-}
+```bash
+claude mcp add --scope user jira node /Users/Bobchen/Desktop/dev/mcp/jira/jira-mcp-server.js
 ```
 
 設定完成後重啟對應工具，即可在所有專案中使用 Jira 工具。
@@ -85,7 +78,13 @@ cp jira/.env.example jira/.env
 
 #### Claude Code — 專案
 
-編輯專案根目錄下的 `.claude/mcp_settings.json`：
+使用 CLI 指令新增（project scope，儲存於專案根目錄的 `.mcp.json`）：
+
+```bash
+claude mcp add --scope project jira node /Users/Bobchen/Desktop/dev/mcp/jira/jira-mcp-server.js
+```
+
+或手動在專案根目錄建立 `.mcp.json`：
 
 ```json
 {
@@ -98,9 +97,9 @@ cp jira/.env.example jira/.env
 }
 ```
 
-#### Antigravity（Gemini）— 專案
+#### Gemini CLI — 專案
 
-編輯專案根目錄下的 `.agent/mcp_settings.json`：
+在專案根目錄建立 `.gemini/settings.json`：
 
 ```json
 {
@@ -128,6 +127,7 @@ cp jira/.env.example jira/.env
 1. `jira/.env` 中的 `JIRA_URL`、`JIRA_USERNAME`、`JIRA_PASSWORD` 是否正確
 2. MCP Server 路徑 `/Users/Bobchen/Desktop/dev/mcp/jira/jira-mcp-server.js` 是否存在
 3. 是否已在 `mcp/` 目錄下執行過 `npm install`
+4. Claude Code 可用 `claude mcp list` 確認 jira server 是否已註冊
 
 ## 可用 MCP 工具
 
